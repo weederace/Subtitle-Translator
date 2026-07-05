@@ -1,0 +1,6 @@
+{
+  "name": "Subtitle Translator AI",
+  "description": "Translate movie and video subtitles into 130+ languages instantly with 100% preservation of timing, tags, and formatting.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
