@@ -29,6 +29,7 @@ import {
   TranslationJob,
   Language,
   TranslationHistoryItem,
+  SubtitleStylingOptions,
 } from "./types";
 import { serializeSubtitleFile } from "./utils/subtitleParser";
 import { SUPPORTED_LANGUAGES } from "./utils/languages";
@@ -51,6 +52,29 @@ export default function App() {
   const [translationMode, setTranslationMode] = useState<'server' | 'client'>('server');
   const [customApiKey, setCustomApiKey] = useState<string>("");
   const [showApiKey, setShowApiKey] = useState<boolean>(false);
+
+  // Subtitle Output & Styling Settings
+  const [outputMode, setOutputMode] = useState<'translated' | 'original' | 'dual'>('translated');
+  const [dualLayout, setDualLayout] = useState<'trans_orig' | 'orig_trans'>('trans_orig');
+  const [originalColor, setOriginalColor] = useState<string>("default");
+  const [originalBold, setOriginalBold] = useState<boolean>(false);
+  const [originalItalic, setOriginalItalic] = useState<boolean>(false);
+  const [translatedColor, setTranslatedColor] = useState<string>("default");
+  const [translatedBold, setTranslatedBold] = useState<boolean>(false);
+  const [translatedItalic, setTranslatedItalic] = useState<boolean>(false);
+
+  const getStylingOptions = (): SubtitleStylingOptions => {
+    return {
+      outputMode,
+      dualLayout,
+      originalColor,
+      originalBold,
+      originalItalic,
+      translatedColor,
+      translatedBold,
+      translatedItalic,
+    };
+  };
 
   // Active Upload State
   const [filename, setFilename] = useState<string>("");
@@ -88,6 +112,31 @@ export default function App() {
       setCustomApiKey(savedKey);
     }
 
+    // Load styling options
+    const savedOutputMode = localStorage.getItem("sub_output_mode") as any;
+    if (savedOutputMode) setOutputMode(savedOutputMode);
+    
+    const savedDualLayout = localStorage.getItem("sub_dual_layout") as any;
+    if (savedDualLayout) setDualLayout(savedDualLayout);
+
+    const savedOrigColor = localStorage.getItem("sub_orig_color");
+    if (savedOrigColor) setOriginalColor(savedOrigColor);
+
+    const savedOrigBold = localStorage.getItem("sub_orig_bold") === "true";
+    setOriginalBold(savedOrigBold);
+
+    const savedOrigItalic = localStorage.getItem("sub_orig_italic") === "true";
+    setOriginalItalic(savedOrigItalic);
+
+    const savedTransColor = localStorage.getItem("sub_trans_color");
+    if (savedTransColor) setTranslatedColor(savedTransColor);
+
+    const savedTransBold = localStorage.getItem("sub_trans_bold") === "true";
+    setTranslatedBold(savedTransBold);
+
+    const savedTransItalic = localStorage.getItem("sub_trans_italic") === "true";
+    setTranslatedItalic(savedTransItalic);
+
     // Dark Mode
     const savedTheme = localStorage.getItem("theme");
     if (savedTheme === "dark") {
@@ -122,6 +171,27 @@ export default function App() {
       } catch (e) {}
     }
   }, []);
+
+  // Sync styling options to LocalStorage
+  useEffect(() => {
+    localStorage.setItem("sub_output_mode", outputMode);
+    localStorage.setItem("sub_dual_layout", dualLayout);
+    localStorage.setItem("sub_orig_color", originalColor);
+    localStorage.setItem("sub_orig_bold", String(originalBold));
+    localStorage.setItem("sub_orig_italic", String(originalItalic));
+    localStorage.setItem("sub_trans_color", translatedColor);
+    localStorage.setItem("sub_trans_bold", String(translatedBold));
+    localStorage.setItem("sub_trans_italic", String(translatedItalic));
+  }, [
+    outputMode,
+    dualLayout,
+    originalColor,
+    originalBold,
+    originalItalic,
+    translatedColor,
+    translatedBold,
+    translatedItalic,
+  ]);
 
   // Update theme settings
   const toggleTheme = () => {
@@ -530,7 +600,7 @@ ${glossaryInstructions}
 
     // Save output file inside local storage history list
     try {
-      const finalCompiledContent = serializeSubtitleFile(updatedItems, subtitleFormat, extraFormatData);
+      const finalCompiledContent = serializeSubtitleFile(updatedItems, subtitleFormat, extraFormatData, getStylingOptions());
       const historyItem: TranslationHistoryItem = {
         id: initialJob.id,
         filename,
@@ -572,7 +642,7 @@ ${glossaryInstructions}
   // Compile final translated subtitle download
   const handleDownloadTranslatedFile = () => {
     try {
-      const compiledContent = serializeSubtitleFile(subtitleItems, subtitleFormat, extraFormatData);
+      const compiledContent = serializeSubtitleFile(subtitleItems, subtitleFormat, extraFormatData, getStylingOptions());
       const blob = new Blob([compiledContent], { type: "text/plain;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -712,6 +782,22 @@ ${glossaryInstructions}
               onDownload={handleDownloadTranslatedFile}
               onReset={handleReset}
               onExportReport={handleExportTranslationReport}
+              outputMode={outputMode}
+              setOutputMode={setOutputMode}
+              dualLayout={dualLayout}
+              setDualLayout={setDualLayout}
+              originalColor={originalColor}
+              setOriginalColor={setOriginalColor}
+              originalBold={originalBold}
+              setOriginalBold={setOriginalBold}
+              originalItalic={originalItalic}
+              setOriginalItalic={setOriginalItalic}
+              translatedColor={translatedColor}
+              setTranslatedColor={setTranslatedColor}
+              translatedBold={translatedBold}
+              setTranslatedBold={setTranslatedBold}
+              translatedItalic={translatedItalic}
+              setTranslatedItalic={setTranslatedItalic}
             />
           </motion.div>
         ) : (
@@ -877,6 +963,22 @@ ${glossaryInstructions}
                   isTranslating={isTranslating}
                   recentFiles={recentFilesUnique}
                   onSelectRecent={handleSelectRecent}
+                  outputMode={outputMode}
+                  setOutputMode={setOutputMode}
+                  dualLayout={dualLayout}
+                  setDualLayout={setDualLayout}
+                  originalColor={originalColor}
+                  setOriginalColor={setOriginalColor}
+                  originalBold={originalBold}
+                  setOriginalBold={setOriginalBold}
+                  originalItalic={originalItalic}
+                  setOriginalItalic={setOriginalItalic}
+                  translatedColor={translatedColor}
+                  setTranslatedColor={setTranslatedColor}
+                  translatedBold={translatedBold}
+                  setTranslatedBold={setTranslatedBold}
+                  translatedItalic={translatedItalic}
+                  setTranslatedItalic={setTranslatedItalic}
                 />
               </div>
 

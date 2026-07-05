@@ -72,3 +72,15 @@ export interface TranslationReport {
   glossaryAppliedCount: number;
   estimatedCost: number;
 }
+
+export interface SubtitleStylingOptions {
+  outputMode: 'translated' | 'original' | 'dual';
+  dualLayout: 'trans_orig' | 'orig_trans';
+  originalColor: string;
+  originalBold: boolean;
+  originalItalic: boolean;
+  translatedColor: string;
+  translatedBold: boolean;
+  translatedItalic: boolean;
+}
+

@@ -1,4 +1,95 @@
-import { SubtitleItem, SubtitleFormat } from '../types';
+import { SubtitleItem, SubtitleFormat, SubtitleStylingOptions } from '../types';
+
+function formatHtmlText(text: string, bold: boolean, italic: boolean, color: string): string {
+  let result = text;
+  if (!result) return "";
+  if (bold) result = `<b>${result}</b>`;
+  if (italic) result = `<i>${result}</i>`;
+  if (color && color !== "default") {
+    result = `<font color="${color}">${result}</font>`;
+  }
+  return result;
+}
+
+function formatAssText(text: string, bold: boolean, italic: boolean, color: string): string {
+  let result = text;
+  if (!result) return "";
+  let tags = "";
+  if (bold) tags += "\\b1";
+  if (italic) tags += "\\i1";
+  if (color && color !== "default") {
+    if (color.startsWith("#") && color.length === 7) {
+      const r = color.substring(1, 3);
+      const g = color.substring(3, 5);
+      const b = color.substring(5, 7);
+      tags += `\\c&H${b}${g}${r}&`;
+    }
+  }
+  
+  if (tags) {
+    let resetTags = "";
+    if (bold) resetTags += "\\b0";
+    if (italic) resetTags += "\\i0";
+    if (color && color !== "default") resetTags += "\\c";
+    return `{${tags}}${result}${resetTags ? `{${resetTags}}` : ""}`;
+  }
+  return result;
+}
+
+export function formatItemText(item: SubtitleItem, format: SubtitleFormat, options?: SubtitleStylingOptions): string {
+  const orig = item.originalText || item.text;
+  const trans = item.translatedText || item.text;
+
+  // If no styling options provided, default to classic translation-only behavior
+  if (!options) {
+    const mainText = item.translatedText || item.text;
+    return item.speaker ? `${item.speaker}${mainText}` : mainText;
+  }
+
+  const isAss = format === 'ass' || format === 'ssa';
+
+  // Helper to format a single piece of text based on style and format type
+  const formatSingle = (txt: string, isOriginal: boolean) => {
+    const bold = isOriginal ? options.originalBold : options.translatedBold;
+    const italic = isOriginal ? options.originalItalic : options.translatedItalic;
+    const color = isOriginal ? options.originalColor : options.translatedColor;
+
+    if (isAss) {
+      return formatAssText(txt, bold, italic, color);
+    } else {
+      return formatHtmlText(txt, bold, italic, color);
+    }
+  };
+
+  const speakerPrefix = item.speaker || "";
+
+  if (options.outputMode === 'original') {
+    const formattedOrig = formatSingle(orig, true);
+    return speakerPrefix ? `${speakerPrefix}${formattedOrig}` : formattedOrig;
+  }
+
+  if (options.outputMode === 'translated') {
+    const formattedTrans = formatSingle(trans, false);
+    return speakerPrefix ? `${speakerPrefix}${formattedTrans}` : formattedTrans;
+  }
+
+  // Dual Subtitles
+  const formattedTrans = formatSingle(trans, false);
+  const formattedOrig = formatSingle(orig, true);
+
+  const newlineDelimiter = isAss ? "\\N" : "\n";
+
+  if (options.dualLayout === 'trans_orig') {
+    const line1 = speakerPrefix ? `${speakerPrefix}${formattedTrans}` : formattedTrans;
+    const line2 = formattedOrig; // Original text usually doesn't need speaker prefix repeated on second line
+    return `${line1}${newlineDelimiter}${line2}`;
+  } else {
+    const line1 = speakerPrefix ? `${speakerPrefix}${formattedOrig}` : formattedOrig;
+    const line2 = formattedTrans;
+    return `${line1}${newlineDelimiter}${line2}`;
+  }
+}
+
 
 /**
  * Splits a string by a delimiter up to N times
@@ -87,9 +178,9 @@ export function parseSRT(content: string): SubtitleItem[] {
 /**
  * Serialize SubtitleItems to SRT Format
  */
-export function serializeSRT(items: SubtitleItem[]): string {
+export function serializeSRT(items: SubtitleItem[], options?: SubtitleStylingOptions): string {
   return items.map((item, idx) => {
-    const text = item.speaker ? `${item.speaker}${item.translatedText || item.text}` : (item.translatedText || item.text);
+    const text = formatItemText(item, 'srt', options);
     return `${item.id || (idx + 1)}\n${item.startTime} --> ${item.endTime}\n${text}\n`;
   }).join('\n') + '\n';
 }
@@ -170,10 +261,10 @@ export function parseVTT(content: string): SubtitleItem[] {
 /**
  * Serialize SubtitleItems to VTT Format
  */
-export function serializeVTT(items: SubtitleItem[]): string {
+export function serializeVTT(items: SubtitleItem[], options?: SubtitleStylingOptions): string {
   let output = 'WEBVTT\n\n';
   output += items.map((item, idx) => {
-    const text = item.speaker ? `${item.speaker}${item.translatedText || item.text}` : (item.translatedText || item.text);
+    const text = formatItemText(item, 'vtt', options);
     const idLine = item.id ? `${item.id}\n` : '';
     return `${idLine}${item.startTime} --> ${item.endTime}\n${text}\n`;
   }).join('\n') + '\n';
@@ -272,7 +363,8 @@ export function parseASS(content: string): { items: SubtitleItem[]; rawLines: Ar
  */
 export function serializeASS(
   items: SubtitleItem[],
-  rawLines: Array<{ type: 'raw' | 'dialogue'; content: string; index?: number }>
+  rawLines: Array<{ type: 'raw' | 'dialogue'; content: string; index?: number }>,
+  options?: SubtitleStylingOptions
 ): string {
   return rawLines.map(line => {
     if (line.type === 'raw') {
@@ -281,7 +373,7 @@ export function serializeASS(
       const item = items[line.index];
       if (!item) return line.content; // Fallback to original
 
-      const text = item.speaker ? `${item.speaker}${item.translatedText || item.text}` : (item.translatedText || item.text);
+      const text = formatItemText(item, 'ass', options);
       return `${item.rawPreDialogueText || 'Dialogue: '}${text}`;
     }
     return '';
@@ -317,17 +409,18 @@ export function parseSubtitleFile(
 export function serializeSubtitleFile(
   items: SubtitleItem[],
   format: SubtitleFormat,
-  extraData?: any
+  extraData?: any,
+  options?: SubtitleStylingOptions
 ): string {
   switch (format) {
     case 'srt':
-      return serializeSRT(items);
+      return serializeSRT(items, options);
     case 'vtt':
-      return serializeVTT(items);
+      return serializeVTT(items, options);
     case 'ass':
     case 'ssa':
-      return serializeASS(items, extraData);
+      return serializeASS(items, extraData, options);
     default:
-      return serializeSRT(items);
+      return serializeSRT(items, options);
   }
 }

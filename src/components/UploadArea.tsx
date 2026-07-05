@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Upload, FileText, Globe, AlertTriangle, FileCode, CheckCircle2, RefreshCw } from "lucide-react";
 import { SubtitleFormat, Language } from "../types";
 import { parseSubtitleFile } from "../utils/subtitleParser";
+import SubtitleStyleCard from "./SubtitleStyleCard";
 
 interface UploadAreaProps {
   onFileParsed: (
@@ -22,6 +23,24 @@ interface UploadAreaProps {
   isTranslating: boolean;
   recentFiles: { name: string; size: number; format: SubtitleFormat }[];
   onSelectRecent: (file: { name: string; size: number; format: SubtitleFormat }) => void;
+  
+  // Styling states
+  outputMode: 'translated' | 'original' | 'dual';
+  setOutputMode: (val: 'translated' | 'original' | 'dual') => void;
+  dualLayout: 'trans_orig' | 'orig_trans';
+  setDualLayout: (val: 'trans_orig' | 'orig_trans') => void;
+  originalColor: string;
+  setOriginalColor: (val: string) => void;
+  originalBold: boolean;
+  setOriginalBold: (val: boolean) => void;
+  originalItalic: boolean;
+  setOriginalItalic: (val: boolean) => void;
+  translatedColor: string;
+  setTranslatedColor: (val: string) => void;
+  translatedBold: boolean;
+  setTranslatedBold: (val: boolean) => void;
+  translatedItalic: boolean;
+  setTranslatedItalic: (val: boolean) => void;
 }
 
 export default function UploadArea({
@@ -35,6 +54,24 @@ export default function UploadArea({
   isTranslating,
   recentFiles,
   onSelectRecent,
+  
+  // Styling props
+  outputMode,
+  setOutputMode,
+  dualLayout,
+  setDualLayout,
+  originalColor,
+  setOriginalColor,
+  originalBold,
+  setOriginalBold,
+  originalItalic,
+  setOriginalItalic,
+  translatedColor,
+  setTranslatedColor,
+  translatedBold,
+  setTranslatedBold,
+  translatedItalic,
+  setTranslatedItalic,
 }: UploadAreaProps) {
   const [dragActive, setDragActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,6 +83,7 @@ export default function UploadArea({
     charCount: number;
     wordCount: number;
   } | null>(null);
+
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -224,115 +262,144 @@ export default function UploadArea({
       {/* File Stats & Language Selector Card */}
       <AnimatePresence>
         {fileDetails && (
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 15 }}
-            className="p-6 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-2xl shadow-sm grid grid-cols-1 md:grid-cols-12 gap-6"
-          >
-            {/* Left side: File Summary */}
-            <div className="md:col-span-6 space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-blue-50 dark:bg-blue-950/30 rounded-xl text-blue-600 dark:text-blue-400">
-                  {fileDetails.format === "srt" || fileDetails.format === "vtt" ? (
-                    <FileText className="w-6 h-6" />
-                  ) : (
-                    <FileCode className="w-6 h-6" />
-                  )}
+          <div className="space-y-6">
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 15 }}
+              className="p-6 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-2xl shadow-sm grid grid-cols-1 md:grid-cols-12 gap-6"
+            >
+              {/* Left side: File Summary */}
+              <div className="md:col-span-6 space-y-4">
+                <div className="flex items-center gap-3">
+                  <div className="p-2.5 bg-blue-50 dark:bg-blue-950/30 rounded-xl text-blue-600 dark:text-blue-400">
+                    {fileDetails.format === "srt" || fileDetails.format === "vtt" ? (
+                      <FileText className="w-6 h-6" />
+                    ) : (
+                      <FileCode className="w-6 h-6" />
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-zinc-900 dark:text-zinc-100 truncate max-w-xs md:max-w-md">
+                      {fileDetails.name}
+                    </h4>
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                      Size: {fileDetails.size} &nbsp;•&nbsp; Format: <span className="font-mono font-bold uppercase">{fileDetails.format}</span>
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-semibold text-zinc-900 dark:text-zinc-100 truncate max-w-xs md:max-w-md">
-                    {fileDetails.name}
-                  </h4>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                    Size: {fileDetails.size} &nbsp;•&nbsp; Format: <span className="font-mono font-bold uppercase">{fileDetails.format}</span>
-                  </p>
+
+                <div className="grid grid-cols-3 gap-2 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-zinc-100 dark:border-zinc-800">
+                  <div className="text-center">
+                    <p className="text-[10px] uppercase font-bold tracking-wider text-zinc-400 dark:text-zinc-500">
+                      Subtitles
+                    </p>
+                    <p className="text-lg font-mono font-bold text-zinc-800 dark:text-zinc-200">
+                      {fileDetails.linesCount}
+                    </p>
+                  </div>
+                  <div className="text-center border-x border-zinc-200 dark:border-zinc-700">
+                    <p className="text-[10px] uppercase font-bold tracking-wider text-zinc-400 dark:text-zinc-500">
+                      Words
+                    </p>
+                    <p className="text-lg font-mono font-bold text-zinc-800 dark:text-zinc-200">
+                      {fileDetails.wordCount.toLocaleString()}
+                    </p>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-[10px] uppercase font-bold tracking-wider text-zinc-400 dark:text-zinc-500">
+                      Characters
+                    </p>
+                    <p className="text-lg font-mono font-bold text-zinc-800 dark:text-zinc-200">
+                      {fileDetails.charCount.toLocaleString()}
+                    </p>
+                  </div>
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-2 p-3 bg-zinc-50 dark:bg-zinc-800/50 rounded-xl border border-zinc-100 dark:border-zinc-800">
-                <div className="text-center">
-                  <p className="text-[10px] uppercase font-bold tracking-wider text-zinc-400 dark:text-zinc-500">
-                    Subtitles
-                  </p>
-                  <p className="text-lg font-mono font-bold text-zinc-800 dark:text-zinc-200">
-                    {fileDetails.linesCount}
-                  </p>
-                </div>
-                <div className="text-center border-x border-zinc-200 dark:border-zinc-700">
-                  <p className="text-[10px] uppercase font-bold tracking-wider text-zinc-400 dark:text-zinc-500">
-                    Words
-                  </p>
-                  <p className="text-lg font-mono font-bold text-zinc-800 dark:text-zinc-200">
-                    {fileDetails.wordCount.toLocaleString()}
-                  </p>
-                </div>
-                <div className="text-center">
-                  <p className="text-[10px] uppercase font-bold tracking-wider text-zinc-400 dark:text-zinc-500">
-                    Characters
-                  </p>
-                  <p className="text-lg font-mono font-bold text-zinc-800 dark:text-zinc-200">
-                    {fileDetails.charCount.toLocaleString()}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {/* Right side: Language Dropdowns & Translate Button */}
-            <div className="md:col-span-6 flex flex-col justify-between gap-4">
-              <div className="grid grid-cols-2 gap-3">
-                {/* Source Language */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
-                    <Globe className="w-3.5 h-3.5" /> Source Language
-                  </label>
-                  <select
-                    value={selectedSourceLang}
-                    onChange={(e) => setSelectedSourceLang(e.target.value)}
-                    className="w-full text-sm rounded-xl border border-zinc-200 dark:border-zinc-800 p-2.5 bg-white dark:bg-zinc-950 text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                  >
-                    {languages.map((lang) => (
-                      <option key={lang.code} value={lang.code}>
-                        {lang.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Target Language */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
-                    <Globe className="w-3.5 h-3.5" /> Target Language
-                  </label>
-                  <select
-                    value={selectedTargetLang}
-                    onChange={(e) => setSelectedTargetLang(e.target.value)}
-                    className="w-full text-sm rounded-xl border border-zinc-200 dark:border-zinc-800 p-2.5 bg-white dark:bg-zinc-950 text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                  >
-                    {languages
-                      .filter((lang) => lang.code !== "auto")
-                      .map((lang) => (
+              {/* Right side: Language Dropdowns & Translate Button */}
+              <div className="md:col-span-6 flex flex-col justify-between gap-4">
+                <div className="grid grid-cols-2 gap-3">
+                  {/* Source Language */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+                      <Globe className="w-3.5 h-3.5" /> Source Language
+                    </label>
+                    <select
+                      value={selectedSourceLang}
+                      onChange={(e) => setSelectedSourceLang(e.target.value)}
+                      className="w-full text-sm rounded-xl border border-zinc-200 dark:border-zinc-800 p-2.5 bg-white dark:bg-zinc-950 text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    >
+                      {languages.map((lang) => (
                         <option key={lang.code} value={lang.code}>
                           {lang.name}
                         </option>
                       ))}
-                  </select>
-                </div>
-              </div>
+                    </select>
+                  </div>
 
-              {/* Translate button */}
-              <motion.button
-                onClick={onStartTranslation}
-                disabled={isTranslating}
-                className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl flex items-center justify-center gap-2 shadow-sm shadow-blue-500/20 disabled:opacity-50 transition-colors cursor-pointer"
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-              >
-                <CheckCircle2 className="w-5 h-5" />
-                Translate Subtitle File
-              </motion.button>
-            </div>
-          </motion.div>
+                  {/* Target Language */}
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 flex items-center gap-1.5">
+                      <Globe className="w-3.5 h-3.5" /> Target Language
+                    </label>
+                    <select
+                      value={selectedTargetLang}
+                      onChange={(e) => setSelectedTargetLang(e.target.value)}
+                      className="w-full text-sm rounded-xl border border-zinc-200 dark:border-zinc-800 p-2.5 bg-white dark:bg-zinc-950 text-zinc-800 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    >
+                      {languages
+                        .filter((lang) => lang.code !== "auto")
+                        .map((lang) => (
+                          <option key={lang.code} value={lang.code}>
+                            {lang.name}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Translate button */}
+                <motion.button
+                  onClick={onStartTranslation}
+                  disabled={isTranslating}
+                  className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl flex items-center justify-center gap-2 shadow-sm shadow-blue-500/20 disabled:opacity-50 transition-colors cursor-pointer"
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                >
+                  <CheckCircle2 className="w-5 h-5" />
+                  Translate Subtitle File
+                </motion.button>
+              </div>
+            </motion.div>
+
+            {/* Subtitle Design Options panel */}
+            <motion.div
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 15 }}
+              className="w-full"
+            >
+              <SubtitleStyleCard
+                outputMode={outputMode}
+                setOutputMode={setOutputMode}
+                dualLayout={dualLayout}
+                setDualLayout={setDualLayout}
+                originalColor={originalColor}
+                setOriginalColor={setOriginalColor}
+                originalBold={originalBold}
+                setOriginalBold={setOriginalBold}
+                originalItalic={originalItalic}
+                setOriginalItalic={setOriginalItalic}
+                translatedColor={translatedColor}
+                setTranslatedColor={setTranslatedColor}
+                translatedBold={translatedBold}
+                setTranslatedBold={setTranslatedBold}
+                translatedItalic={translatedItalic}
+                setTranslatedItalic={setTranslatedItalic}
+              />
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 

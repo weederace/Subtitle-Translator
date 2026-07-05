@@ -13,7 +13,7 @@ const PORT = 3000;
 app.use(express.json({ limit: "50mb" }));
 
 // Initialize Google GenAI Client
-const apiKey = process.env.GEMINI_API_KEY;
+const apiKey = process.env.GEMINI_API_KEY || "YOUR_HARDCODED_API_KEY_HERE";
 let aiClient: GoogleGenAI | null = null;
 
 function getAiClient() {

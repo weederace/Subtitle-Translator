@@ -2,6 +2,7 @@ import React from "react";
 import { motion } from "motion/react";
 import { Check, Download, ArrowLeft, FileSpreadsheet, Percent, Info, Calendar } from "lucide-react";
 import { SubtitleFormat, Language } from "../types";
+import SubtitleStyleCard from "./SubtitleStyleCard";
 
 interface DownloadScreenProps {
   filename: string;
@@ -16,6 +17,24 @@ interface DownloadScreenProps {
   onDownload: () => void;
   onReset: () => void;
   onExportReport: () => void;
+  
+  // Styling state props
+  outputMode: 'translated' | 'original' | 'dual';
+  setOutputMode: (val: 'translated' | 'original' | 'dual') => void;
+  dualLayout: 'trans_orig' | 'orig_trans';
+  setDualLayout: (val: 'trans_orig' | 'orig_trans') => void;
+  originalColor: string;
+  setOriginalColor: (val: string) => void;
+  originalBold: boolean;
+  setOriginalBold: (val: boolean) => void;
+  originalItalic: boolean;
+  setOriginalItalic: (val: boolean) => void;
+  translatedColor: string;
+  setTranslatedColor: (val: string) => void;
+  translatedBold: boolean;
+  setTranslatedBold: (val: boolean) => void;
+  translatedItalic: boolean;
+  setTranslatedItalic: (val: boolean) => void;
 }
 
 export default function DownloadScreen({
@@ -31,13 +50,30 @@ export default function DownloadScreen({
   onDownload,
   onReset,
   onExportReport,
+  
+  // Styling props
+  outputMode,
+  setOutputMode,
+  dualLayout,
+  setDualLayout,
+  originalColor,
+  setOriginalColor,
+  originalBold,
+  setOriginalBold,
+  originalItalic,
+  setOriginalItalic,
+  translatedColor,
+  setTranslatedColor,
+  translatedBold,
+  setTranslatedBold,
+  translatedItalic,
+  setTranslatedItalic,
 }: DownloadScreenProps) {
   const getLanguageName = (code: string) => {
     return languages.find((l) => l.code === code)?.name || code;
   };
 
   const speedLinesPerSecond = totalItems / (durationMs / 1000);
-  // Estimate Google Translate API cost (approx $20 per 1 million characters)
   const estimatedCost = (charactersCount * 0.00002).toFixed(4);
 
   return (
@@ -71,7 +107,7 @@ export default function DownloadScreen({
             {filename.substring(0, filename.lastIndexOf("."))}_{targetLang}.{format}
           </h4>
         </div>
-        <span className="px-3 py-1 bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-mono font-bold text-xs uppercase rounded-lg border border-blue-100 dark:border-blue-900/40">
+        <span className="px-3 py-1 bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 font-mono font-bold text-xs uppercase rounded-lg border border-blue-100/30 dark:border-blue-900/40">
           .{format}
         </span>
       </div>
@@ -138,6 +174,26 @@ export default function DownloadScreen({
           </p>
         </div>
       </div>
+
+      {/* Output Styling Panel */}
+      <SubtitleStyleCard
+        outputMode={outputMode}
+        setOutputMode={setOutputMode}
+        dualLayout={dualLayout}
+        setDualLayout={setDualLayout}
+        originalColor={originalColor}
+        setOriginalColor={setOriginalColor}
+        originalBold={originalBold}
+        setOriginalBold={setOriginalBold}
+        originalItalic={originalItalic}
+        setOriginalItalic={setOriginalItalic}
+        translatedColor={translatedColor}
+        setTranslatedColor={setTranslatedColor}
+        translatedBold={translatedBold}
+        setTranslatedBold={setTranslatedBold}
+        translatedItalic={translatedItalic}
+        setTranslatedItalic={setTranslatedItalic}
+      />
 
       {/* Cost Estimator Informational banner */}
       <div className="p-4 bg-blue-50/50 dark:bg-blue-950/15 border border-blue-100/40 dark:border-blue-900/40 rounded-xl text-blue-800 dark:text-blue-400 text-xs flex gap-3 items-center">
